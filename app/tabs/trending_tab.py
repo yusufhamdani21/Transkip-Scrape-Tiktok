@@ -209,21 +209,27 @@ class TrendingTab(ft.Column):
         def run():
             try:
                 region = self.region_dropdown.value
-                self._raw_videos = self.client.get_trending_feed(region)
+                raw = self.client.get_trending_feed(region)
+                self._raw_videos = raw if isinstance(raw, list) else []
+                total = len(self._raw_videos)
 
-                save_trending_cache(region, json.dumps(self._raw_videos, ensure_ascii=False))
-                save_trending_history(region, self._raw_videos)
+                if total > 0:
+                    save_trending_cache(region, json.dumps(self._raw_videos, ensure_ascii=False))
+                    save_trending_history(region, self._raw_videos)
 
                 self._display_videos()
-                total = len(self._raw_videos)
                 filtered = self._filter_videos()
                 shown = len(filtered)
                 region_name = REGIONS.get(region, region)
-                if shown < total:
+                if total == 0:
+                    self.status_text.value = f"Tidak ada video dari API ({region_name})"
+                    self.status_text.color = ft.colors.ORANGE
+                elif shown < total:
                     self.status_text.value = f"✅ {shown} dari {total} video ({region_name})"
+                    self.status_text.color = ft.colors.GREEN
                 else:
                     self.status_text.value = f"✅ {total} video trending dari {region_name}"
-                self.status_text.color = ft.colors.GREEN
+                    self.status_text.color = ft.colors.GREEN
             except Exception as ex:
                 self.status_text.value = f"Error: {ex}"
                 self.status_text.color = ft.colors.RED
