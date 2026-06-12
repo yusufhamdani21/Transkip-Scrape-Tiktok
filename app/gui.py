@@ -2,6 +2,14 @@ import traceback
 
 import flet as ft
 
+LOG_FILE = "transkip_error.log"
+
+
+def log(msg):
+    with open(LOG_FILE, "a") as f:
+        f.write(msg + "\n")
+
+
 from app.tabs.transcribe_tab import TranscribeTab
 from app.tabs.trending_tab import TrendingTab
 from core.database import init_db
@@ -17,7 +25,9 @@ def main(page: ft.Page):
         page.window_min_width = 600
         page.window_min_height = 500
 
+        log("init_db...")
         init_db()
+        log("init_db done")
 
         transcribe_tab = TranscribeTab(page)
         trending_tab = TrendingTab(page)

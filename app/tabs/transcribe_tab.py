@@ -6,7 +6,6 @@ import flet as ft
 from core.transcriber import transcribe, export_srt, export_vtt, get_available_models
 from core.recorder import AudioRecorder
 from core.database import save_transcription, get_transcriptions
-from core.file_picker import pick_audio_file, save_file as save_file_dialog
 
 
 class TranscribeTab(ft.Column):
@@ -19,6 +18,13 @@ class TranscribeTab(ft.Column):
         self._build()
 
     def _build(self):
+        self.path_field = ft.TextField(
+            label="Path file audio",
+            hint_text="Klik Browse atau ketik path manual",
+            expand=True,
+            read_only=False,
+        )
+
         self.model_dropdown = ft.Dropdown(
             label="Model Whisper",
             value="base",
@@ -72,6 +78,14 @@ class TranscribeTab(ft.Column):
             "Export", icon=ft.Icons.DOWNLOAD, on_click=self._export
         )
 
+        # Attempt to use FilePicker
+        self.file_picker = None
+        try:
+            self.file_picker = ft.FilePicker()
+            self._page.overlay.append(self.file_picker)
+        except Exception:
+            pass
+
         controls = [
             ft.Row(
                 [
@@ -83,12 +97,17 @@ class TranscribeTab(ft.Column):
             ft.Row(
                 [
                     ft.ElevatedButton(
-                        "Pilih File Audio",
+                        "Browse",
                         icon=ft.Icons.UPLOAD_FILE,
                         on_click=self._pick_file,
                     ),
-                    self.record_btn,
+                    self.path_field,
                 ],
+                spacing=10,
+                expand=True,
+            ),
+            ft.Row(
+                [self.record_btn],
                 spacing=10,
             ),
             ft.Row(
@@ -109,13 +128,33 @@ class TranscribeTab(ft.Column):
         self._refresh_history()
 
     def _pick_file(self, e):
-        path = pick_audio_file()
-        if path:
+        # Try FilePicker first
+        if self.file_picker:
+            try:
+                files = self.file_picker.pick_files(
+                    allow_multiple=False,
+                    allowed_extensions=["mp3", "wav", "m4a", "ogg", "mp4", "webm"],
+                )
+                if files:
+                    self.path_field.value = files[0].path
+                    self._on_path_changed()
+                return
+            except Exception:
+                pass
+
+    def _on_path_changed(self):
+        path = self.path_field.value.strip()
+        if path and Path(path).exists():
             self.audio_path = path
-            self.status_text.value = f"File: {Path(self.audio_path).name}"
+            self.status_text.value = f"File: {Path(path).name}"
             self.status_text.color = ft.Colors.GREEN
             self.transcribe_btn.disabled = False
-            self._page.update()
+        else:
+            self.audio_path = None
+            self.status_text.value = "Siap"
+            self.status_text.color = ft.Colors.GREY_700
+            self.transcribe_btn.disabled = True
+        self._page.update()
 
     def _toggle_record(self, e):
         if not self.recorder.recording:
@@ -131,6 +170,7 @@ class TranscribeTab(ft.Column):
             self.record_btn.icon = ft.Icons.MIC
             if result:
                 self.audio_path, duration = result
+                self.path_field.value = self.audio_path
                 self.status_text.value = (
                     f"Rekaman selesai ({duration:.1f}s) - {Path(self.audio_path).name}"
                 )
@@ -143,7 +183,9 @@ class TranscribeTab(ft.Column):
 
     def _transcribe(self, e):
         if not self.audio_path:
-            return
+            self._on_path_changed()
+            if not self.audio_path:
+                return
 
         self.transcribe_btn.disabled = True
         self.progress_bar.visible = True
@@ -187,8 +229,29 @@ class TranscribeTab(ft.Column):
         ext = fmt.lower()
         default_name = f"transkrip.{ext}"
 
-        path = save_file_dialog(default_name)
-        if not path:
+        saved_path = None
+        if self.file_picker:
+            try:
+                saved_path = self.file_picker.save_file(
+                    dialog_title="Simpan hasil transkripsi",
+                    file_name=default_name,
+                )
+            except Exception:
+                pass
+
+        if not saved_path:
+            from tkinter import filedialog, Tk
+            root = Tk()
+            root.withdraw()
+            root.attributes("-topmost", True)
+            saved_path = filedialog.asksaveasfilename(
+                title="Simpan hasil transkripsi",
+                defaultextension=f".{ext}",
+                initialfile=default_name,
+            )
+            root.destroy()
+
+        if not saved_path:
             return
 
         content = self.result_text.value
@@ -196,8 +259,8 @@ class TranscribeTab(ft.Column):
             content = export_srt(self.segments)
         elif ext == "vtt":
             content = export_vtt(self.segments)
-        Path(path).write_text(content, encoding="utf-8")
-        self.status_text.value = f"Terexport ke {path}"
+        Path(saved_path).write_text(content, encoding="utf-8")
+        self.status_text.value = f"Terexport ke {saved_path}"
         self.status_text.color = ft.Colors.GREEN
         self._page.update()
 

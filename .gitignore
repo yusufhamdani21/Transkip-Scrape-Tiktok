@@ -5,3 +5,6 @@ build/
 dist/
 *.spec
 .env
+__pycache__/
+*.pyc
+transkip_error.log
