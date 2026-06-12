@@ -23,6 +23,13 @@ class TranscribeTab(ft.Column):
         self.file_picker = ft.FilePicker(on_result=self._on_file_picked)
         self._page.overlay.append(self.file_picker)
 
+        self.path_field = ft.TextField(
+            label="Atau ketik path file manual",
+            hint_text="contoh: C:/audio/saya.mp3 atau /home/user/file.wav",
+            expand=True,
+            on_submit=lambda _: self._set_manual_path(),
+        )
+
         self.model_dropdown = ft.Dropdown(
             label="Model Whisper",
             value="base",
@@ -87,7 +94,7 @@ class TranscribeTab(ft.Column):
             ft.Row(
                 [
                     ft.ElevatedButton(
-                        "Pilih File Audio",
+                        "Browse",
                         icon=ft.icons.UPLOAD_FILE,
                         on_click=lambda _: self.file_picker.pick_files(
                             allow_multiple=False,
@@ -96,6 +103,10 @@ class TranscribeTab(ft.Column):
                     ),
                     self.record_btn,
                 ],
+                spacing=10,
+            ),
+            ft.Row(
+                [self.path_field],
                 spacing=10,
             ),
             ft.Row(
@@ -132,9 +143,19 @@ class TranscribeTab(ft.Column):
             self.status_text.value = f"File: {f.name}"
             self.status_text.color = ft.colors.GREEN
             self.transcribe_btn.disabled = False
+            self.path_field.value = f.name
         elif e.path:
             self._save_result(e.path)
         self._page.update()
+
+    def _set_manual_path(self):
+        p = self.path_field.value.strip()
+        if p:
+            self.audio_path = p
+            self.status_text.value = f"File: {Path(p).name}"
+            self.status_text.color = ft.colors.GREEN
+            self.transcribe_btn.disabled = False
+            self._page.update()
 
     def _save_result(self, path):
         if not path:
