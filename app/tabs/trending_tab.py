@@ -199,6 +199,7 @@ class TrendingTab(ft.Column):
             return
 
         self.client.api_key = field_key
+        self.filter_field.value = ""
 
         self.refresh_btn.disabled = True
         self.progress_bar.visible = True
@@ -218,15 +219,10 @@ class TrendingTab(ft.Column):
                     save_trending_history(region, self._raw_videos)
 
                 self._display_videos()
-                filtered = self._filter_videos()
-                shown = len(filtered)
                 region_name = REGIONS.get(region, region)
                 if total == 0:
                     self.status_text.value = f"Tidak ada video dari API ({region_name})"
                     self.status_text.color = ft.colors.ORANGE
-                elif shown < total:
-                    self.status_text.value = f"✅ {shown} dari {total} video ({region_name})"
-                    self.status_text.color = ft.colors.GREEN
                 else:
                     self.status_text.value = f"✅ {total} video trending dari {region_name}"
                     self.status_text.color = ft.colors.GREEN
