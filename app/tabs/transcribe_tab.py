@@ -1,5 +1,4 @@
 import threading
-import tempfile
 from pathlib import Path
 
 import flet as ft
@@ -7,7 +6,6 @@ import flet as ft
 from core.transcriber import transcribe, export_srt, export_vtt, get_available_models
 from core.recorder import AudioRecorder
 from core.database import save_transcription, get_transcriptions
-from config import RECORDINGS_DIR
 
 
 class TranscribeTab(ft.Column):
@@ -131,18 +129,14 @@ class TranscribeTab(ft.Column):
             f = e.files[0]
             if f.path:
                 self.audio_path = f.path
-            elif f.name:
-                tmp = RECORDINGS_DIR / f.name
-                if tmp.exists():
-                    self.audio_path = str(tmp)
-            if not self.audio_path:
-                self.status_text.value = "Gagal: path file tidak tersedia di web mode"
-                self.status_text.color = ft.colors.RED
+                self.status_text.value = f"File: {f.name}"
+                self.status_text.color = ft.colors.GREEN
+                self.transcribe_btn.disabled = False
+                self.path_field.value = f.name
                 self._page.update()
                 return
-            self.status_text.value = f"File: {f.name}"
-            self.status_text.color = ft.colors.GREEN
-            self.transcribe_btn.disabled = False
+            self.status_text.value = "Path tidak tersedia. Gunakan kolom manual path."
+            self.status_text.color = ft.colors.ORANGE
             self.path_field.value = f.name
         elif e.path:
             self._save_result(e.path)
