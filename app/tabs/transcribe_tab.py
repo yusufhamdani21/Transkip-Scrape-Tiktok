@@ -6,6 +6,7 @@ import flet as ft
 from core.transcriber import transcribe, export_srt, export_vtt, get_available_models
 from core.recorder import AudioRecorder
 from core.database import save_transcription, get_transcriptions
+from core.file_picker import pick_audio_file, save_file as save_file_dialog
 
 
 class TranscribeTab(ft.Column):
@@ -18,9 +19,6 @@ class TranscribeTab(ft.Column):
         self._build()
 
     def _build(self):
-        self.file_picker = ft.FilePicker()
-        self._page.overlay.append(self.file_picker)
-
         self.model_dropdown = ft.Dropdown(
             label="Model Whisper",
             value="base",
@@ -111,12 +109,9 @@ class TranscribeTab(ft.Column):
         self._refresh_history()
 
     def _pick_file(self, e):
-        files = self.file_picker.pick_files(
-            allow_multiple=False,
-            allowed_extensions=["mp3", "wav", "m4a", "ogg", "mp4", "webm"],
-        )
-        if files:
-            self.audio_path = files[0].path
+        path = pick_audio_file()
+        if path:
+            self.audio_path = path
             self.status_text.value = f"File: {Path(self.audio_path).name}"
             self.status_text.color = ft.Colors.GREEN
             self.transcribe_btn.disabled = False
@@ -192,10 +187,7 @@ class TranscribeTab(ft.Column):
         ext = fmt.lower()
         default_name = f"transkrip.{ext}"
 
-        path = self.file_picker.save_file(
-            dialog_title="Simpan hasil transkripsi",
-            file_name=default_name,
-        )
+        path = save_file_dialog(default_name)
         if not path:
             return
 
