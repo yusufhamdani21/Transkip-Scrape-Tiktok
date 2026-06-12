@@ -1,0 +1,35 @@
+import subprocess
+import sys
+from pathlib import Path
+
+
+PYINSTALLER_CMD = [
+    "pyinstaller",
+    "--name=Transkip",
+    "--windowed",
+    "--onefile",
+    "--add-data=src:src",
+    "--hidden-import=faster_whisper",
+    "--hidden-import=ctranslate2",
+    "--hidden-import=sounddevice",
+    "--hidden-import=_sounddevice_data",
+    "--collect-all=flet",
+    "main.py",
+]
+
+
+def main():
+    print("Membangun aplikasi Transkip dengan PyInstaller...")
+    print("Perintah:", " ".join(PYINSTALLER_CMD))
+
+    result = subprocess.run(PYINSTALLER_CMD, capture_output=False)
+    if result.returncode == 0:
+        print("\n✅ Build berhasil!")
+        print(f"📦 File ada di: dist/Transkip")
+    else:
+        print(f"\n❌ Build gagal dengan kode {result.returncode}")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

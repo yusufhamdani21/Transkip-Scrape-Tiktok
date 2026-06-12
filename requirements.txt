@@ -1,0 +1,7 @@
+flet>=0.25.0
+faster-whisper>=1.1.0
+pydub>=0.25.1
+sounddevice>=0.5.1
+numpy>=2.0.0
+requests>=2.32.0
+python-dotenv>=1.0.0
