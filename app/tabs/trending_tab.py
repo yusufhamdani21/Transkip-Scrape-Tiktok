@@ -14,16 +14,6 @@ from core.database import (
 from config import RAPIDAPI_KEY
 
 
-KEYWORD_SUGGESTIONS = [
-    "artis", "seleb", "gosip", "viral", "drama",
-    "selebriti", "aktor", "aktris", "penyanyi",
-    "kawin", "cerai", "skandal", "pacaran",
-    "bahlil",
-    "politik", "presiden", "jokowi", "prabowo",
-    "pemilu", "menteri", "dpr", "partai",
-    "korupsi", "kabinet", "pemerintah", "rakyat",
-]
-
 REGIONS = {
     "ID": "Indonesia",
     "US": "Amerika Serikat",
@@ -42,6 +32,17 @@ REGIONS = {
     "DE": "Jerman",
     "FR": "Prancis",
 }
+
+
+KEYWORD_SUGGESTIONS = [
+    "artis", "seleb", "gosip", "viral", "drama",
+    "selebriti", "aktor", "aktris", "penyanyi",
+    "kawin", "cerai", "skandal", "pacaran",
+    "bahlil",
+    "politik", "presiden", "jokowi", "prabowo",
+    "pemilu", "menteri", "dpr", "partai",
+    "korupsi", "kabinet", "pemerintah", "rakyat",
+]
 
 
 class TrendingTab(ft.Column):
@@ -69,14 +70,14 @@ class TrendingTab(ft.Column):
         self.filter_field = ft.TextField(
             label="Filter kata kunci",
             hint_text="artis, gosip, politik...",
-            on_change=self._on_filter_change,
             expand=True,
+            on_submit=lambda _: self._apply_filter(),
         )
 
-        self.suggestion_chips = ft.Column(
-            spacing=2,
-            visible=False,
-            wrap=True,
+        self.apply_filter_btn = ft.ElevatedButton(
+            "Terapkan",
+            icon=ft.icons.FILTER_LIST,
+            on_click=lambda _: self._apply_filter(),
         )
 
         self.status_text = ft.Text("", size=13)
@@ -129,8 +130,10 @@ class TrendingTab(ft.Column):
                 [self.region_dropdown, self.refresh_btn],
                 spacing=10,
             ),
-            self.filter_field,
-            self.suggestion_chips,
+            ft.Row(
+                [self.filter_field, self.apply_filter_btn],
+                spacing=5,
+            ),
             self.status_text,
             self.progress_bar,
             self.tab_btns,
@@ -155,46 +158,8 @@ class TrendingTab(ft.Column):
             self.status_text.color = ft.colors.GREEN
             self._page.update()
 
-    def _on_filter_change(self, e):
-        text = self.filter_field.value.strip().lower()
-        if not text:
-            self.suggestion_chips.visible = False
-            self._display_videos()
-            self._page.update()
-            return
-
-        last_keyword = text.split(",")[-1].strip()
-        if not last_keyword:
-            self.suggestion_chips.visible = False
-            self._display_videos()
-            self._page.update()
-            return
-
-        matches = [kw for kw in KEYWORD_SUGGESTIONS if kw.startswith(last_keyword) and kw != last_keyword]
-        self.suggestion_chips.controls.clear()
-        if matches:
-            for kw in matches[:10]:
-                self.suggestion_chips.controls.append(
-                    ft.TextButton(
-                        kw,
-                        on_click=lambda _, k=kw: self._apply_suggestion(k),
-                    )
-                )
-        self.suggestion_chips.visible = bool(matches)
+    def _apply_filter(self):
         self._display_videos()
-        self._page.update()
-
-    def _apply_suggestion(self, keyword):
-        text = self.filter_field.value.strip()
-        parts = [p.strip() for p in text.split(",") if p.strip()]
-        if parts:
-            parts[-1] = keyword
-        else:
-            parts = [keyword]
-        self.filter_field.value = ", ".join(parts) + ", "
-        self.suggestion_chips.visible = False
-        self._display_videos()
-        self._page.update()
 
     def _filter_videos(self):
         text = self.filter_field.value.strip().lower()
@@ -249,15 +214,15 @@ class TrendingTab(ft.Column):
                 save_trending_cache(region, json.dumps(self._raw_videos, ensure_ascii=False))
                 save_trending_history(region, self._raw_videos)
 
-                filtered = self._filter_videos()
                 self._display_videos()
                 total = len(self._raw_videos)
+                filtered = self._filter_videos()
                 shown = len(filtered)
-                label = REGIONS.get(region, region)
+                region_name = REGIONS.get(region, region)
                 if shown < total:
-                    self.status_text.value = f"✅ {shown} dari {total} video ({label})"
+                    self.status_text.value = f"✅ {shown} dari {total} video ({region_name})"
                 else:
-                    self.status_text.value = f"✅ {total} video trending dari {label}"
+                    self.status_text.value = f"✅ {total} video trending dari {region_name}"
                 self.status_text.color = ft.colors.GREEN
             except Exception as ex:
                 self.status_text.value = f"Error: {ex}"
@@ -270,9 +235,9 @@ class TrendingTab(ft.Column):
 
         threading.Thread(target=run, daemon=True).start()
 
-    def _display_videos(self, videos=None):
+    def _display_videos(self):
         self.trending_list.controls.clear()
-        source = videos if videos is not None else self._filter_videos()
+        source = self._filter_videos()
         if not source:
             self.trending_list.controls.append(
                 ft.Text("Tidak ada data trending", italic=True)
