@@ -92,7 +92,6 @@ class TranscribeTab(ft.Column):
                         on_click=lambda _: self.file_picker.pick_files(
                             allow_multiple=False,
                             allowed_extensions=["mp3", "wav", "m4a", "ogg", "mp4", "webm"],
-                            with_data=True,
                         ),
                     ),
                     self.record_btn,
@@ -121,12 +120,12 @@ class TranscribeTab(ft.Column):
             f = e.files[0]
             if f.path:
                 self.audio_path = f.path
-            elif f.bytes:
-                path = RECORDINGS_DIR / (f.name or f"upload_{id(f)}")
-                path.write_bytes(f.bytes)
-                self.audio_path = str(path)
-            else:
-                self.status_text.value = "Gagal: file tidak tersedia"
+            elif f.name:
+                tmp = RECORDINGS_DIR / f.name
+                if tmp.exists():
+                    self.audio_path = str(tmp)
+            if not self.audio_path:
+                self.status_text.value = "Gagal: path file tidak tersedia di web mode"
                 self.status_text.color = ft.colors.RED
                 self._page.update()
                 return
