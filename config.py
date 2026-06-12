@@ -17,5 +17,5 @@ RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
 RAPIDAPI_HOST = "tiktok-scraper7.p.rapidapi.com"
 
 WHISPER_MODEL = os.getenv("WHISPER_MODEL", "base")
-WHISPER_DEVICE = os.getenv("WHISPER_DEVICE", "auto")
-WHISPER_COMPUTE_TYPE = os.getenv("WHISPER_COMPUTE_TYPE", "auto")
+WHISPER_DEVICE = os.getenv("WHISPER_DEVICE", "cpu")
+WHISPER_COMPUTE_TYPE = os.getenv("WHISPER_COMPUTE_TYPE", "int8")
