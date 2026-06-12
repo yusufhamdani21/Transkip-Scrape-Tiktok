@@ -143,14 +143,14 @@ class TrendingTab(ft.Column):
                 pass
 
     def _refresh_trending(self, e):
-        if not self.client.is_configured and not self.api_key_field.value:
+        field_key = self.api_key_field.value.strip()
+        if not field_key:
             self.status_text.value = "Masukkan RapidAPI Key terlebih dahulu"
             self.status_text.color = ft.colors.RED
             self._page.update()
             return
 
-        if not self.client.is_configured:
-            self.client.api_key = self.api_key_field.value.strip()
+        self.client.api_key = field_key
 
         self.refresh_btn.disabled = True
         self.progress_bar.visible = True
