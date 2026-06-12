@@ -1,4 +1,3 @@
-import json
 import requests
 from config import RAPIDAPI_KEY, RAPIDAPI_HOST
 
@@ -26,68 +25,47 @@ class TikTokClient:
         resp.raise_for_status()
         return resp.json()
 
-    def get_trending_feed(self, region="ID"):
-        data = self._get("/trending/feed", {"region": region})
+    def get_trending_feed(self, region="ID", count=20):
+        data = self._get("/feed/list", {"region": region, "count": count})
         raw = data.get("data", [])
         return self._parse_videos(raw)
 
-    def search_videos(self, keyword, count=20):
-        data = self._get("/video/search", {"keyword": keyword, "count": count})
-        raw = data.get("data", {}).get("videos", [])
+    def get_user_info(self, unique_id):
+        data = self._get("/user/info", {"unique_id": unique_id})
+        return data.get("data", {})
+
+    def get_user_posts(self, unique_id, count=20):
+        data = self._get("/user/posts", {"unique_id": unique_id, "count": count})
+        raw = data.get("data", [])
         return self._parse_videos(raw)
 
-    def search_hashtags(self, keyword, count=10):
-        data = self._get("/challenge/search", {"keyword": keyword, "count": count})
-        raw = data.get("data", {}).get("challenges", [])
-        results = []
-        for h in raw:
-            results.append(
-                {
-                    "title": h.get("title", ""),
-                    "video_count": h.get("videoCount", 0),
-                    "view_count": h.get("viewCount", 0),
-                }
-            )
-        return results
-
-    def search_music(self, keyword, count=10):
-        data = self._get("/music/search", {"keyword": keyword, "count": count})
-        raw = data.get("data", {}).get("musics", [])
-        results = []
-        for m in raw:
-            results.append(
-                {
-                    "title": m.get("title", ""),
-                    "author": m.get("authorName", ""),
-                    "duration": m.get("duration", 0),
-                    "plays": m.get("playCount", 0),
-                }
-            )
-        return results
+    def get_comments(self, url, count=20):
+        data = self._get("/comment/list", {"url": url, "count": count})
+        return data.get("data", [])
 
     def _parse_videos(self, raw):
         videos = []
         for v in raw:
+            author = v.get("author", {}) or {}
             videos.append(
                 {
                     "id": v.get("video_id", ""),
                     "title": v.get("title", ""),
-                    "description": v.get("description", ""),
-                    "author": v.get("author", {}).get("nickname", ""),
-                    "author_followers": v.get("author", {}).get(
-                        "followerCount", 0
-                    ),
-                    "likes": v.get("stats", {}).get("diggCount", 0),
-                    "comments": v.get("stats", {}).get("commentCount", 0),
-                    "shares": v.get("stats", {}).get("shareCount", 0),
-                    "plays": v.get("stats", {}).get("playCount", 0),
+                    "description": v.get("title", ""),
+                    "author": author.get("nickname", ""),
+                    "author_username": author.get("unique_id", ""),
+                    "author_avatar": author.get("avatar", ""),
+                    "likes": v.get("digg_count", 0),
+                    "comments": v.get("comment_count", 0),
+                    "shares": v.get("share_count", 0),
+                    "plays": v.get("play_count", 0),
                     "duration": v.get("duration", 0),
-                    "hashtags": ", ".join(
-                        h.get("name", "") for h in v.get("challenge", [])
-                    ),
-                    "music": v.get("music", {}).get("title", ""),
-                    "url": f"https://www.tiktok.com/@{v.get('author', {}).get('uniqueId', '')}/video/{v.get('video_id', '')}",
+                    "hashtags": "",
+                    "music": v.get("music_info", {}).get("title", ""),
+                    "url": f"https://www.tiktok.com/@{author.get('unique_id', '')}/video/{v.get('video_id', '')}",
                     "cover": v.get("cover", ""),
+                    "region": v.get("region", ""),
+                    "create_time": v.get("create_time", 0),
                 }
             )
         return videos

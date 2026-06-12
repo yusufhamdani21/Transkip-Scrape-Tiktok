@@ -235,12 +235,18 @@ class TrendingTab(ft.Column):
                                                 size=11,
                                                 color=ft.colors.GREY_600,
                                             ),
-                                            ft.Text(
-                                                f"#{v.get('hashtags', '')[:50]}",
-                                                size=11,
-                                                color=ft.colors.BLUE_400,
-                                            ),
-                                        ],
+                                        ]
+                                        + (
+                                            [
+                                                ft.Text(
+                                                    f"#{v.get('hashtags', '')[:50]}",
+                                                    size=11,
+                                                    color=ft.colors.BLUE_400,
+                                                )
+                                            ]
+                                            if v.get("hashtags", "")
+                                            else []
+                                        ),
                                         spacing=8,
                                     ),
                                 ],
