@@ -1,8 +1,9 @@
 import traceback
+import os
 
 import flet as ft
 
-LOG_FILE = "transkip_error.log"
+LOG_FILE = os.path.join(os.path.dirname(__file__) or ".", "transkip_error.log")
 
 
 def log(msg):
@@ -46,12 +47,12 @@ def main(page: ft.Page):
                         [
                             ft.TextButton(
                                 "Transkrip Audio",
-                                icon=ft.Icons.TRANSCRIBE,
+                                icon=ft.icons.TRANSCRIBE,
                                 on_click=lambda _: switch_tab("transcribe"),
                             ),
                             ft.TextButton(
                                 "Tren TikTok",
-                                icon=ft.Icons.TRENDING_UP,
+                                icon=ft.icons.TRENDING_UP,
                                 on_click=lambda _: switch_tab("trending"),
                             ),
                         ],
@@ -60,13 +61,15 @@ def main(page: ft.Page):
                 ],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             ),
-            padding=ft.Padding(0, 0, 0, 10),
+            padding=ft.padding.only(bottom=10),
         )
 
         page.add(nav, ft.Divider(), transcribe_tab, trending_tab)
+        log("page.add done")
     except Exception as e:
+        log(f"Error: {e}\n{traceback.format_exc()}")
         page.add(
-            ft.Text("Error saat memulai aplikasi:", weight=ft.FontWeight.BOLD, color=ft.Colors.RED),
+            ft.Text("Error:", weight=ft.FontWeight.BOLD, color=ft.colors.RED),
             ft.Text(str(e)),
             ft.Text(traceback.format_exc(), size=10),
         )

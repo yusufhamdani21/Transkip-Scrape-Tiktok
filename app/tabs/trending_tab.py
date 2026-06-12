@@ -51,7 +51,7 @@ class TrendingTab(ft.Column):
 
         self.refresh_btn = ft.ElevatedButton(
             "Refresh",
-            icon=ft.Icons.REFRESH,
+            icon=ft.icons.REFRESH,
             on_click=self._refresh_trending,
         )
 
@@ -69,7 +69,7 @@ class TrendingTab(ft.Column):
         )
 
         self.save_key_btn = ft.IconButton(
-            icon=ft.Icons.SAVE,
+            icon=ft.icons.SAVE,
             tooltip="Simpan API Key",
             on_click=self._save_api_key,
         )
@@ -82,12 +82,12 @@ class TrendingTab(ft.Column):
             [
                 ft.TextButton(
                     "Trending Feed",
-                    icon=ft.Icons.TRENDING_UP,
+                    icon=ft.icons.TRENDING_UP,
                     on_click=lambda _: self._switch_inner_tab("feed"),
                 ),
                 ft.TextButton(
                     "Riwayat",
-                    icon=ft.Icons.HISTORY,
+                    icon=ft.icons.HISTORY,
                     on_click=lambda _: self._switch_inner_tab("history"),
                 ),
             ],
@@ -126,7 +126,7 @@ class TrendingTab(ft.Column):
         if key:
             self.client.api_key = key
             self.status_text.value = "API Key tersimpan (untuk sesi ini)"
-            self.status_text.color = ft.Colors.GREEN
+            self.status_text.color = ft.colors.GREEN
             self._page.update()
 
     def _load_cached(self):
@@ -137,7 +137,7 @@ class TrendingTab(ft.Column):
                 data = json.loads(cached["data"])
                 self._display_videos(data)
                 self.status_text.value = f"Data cached dari {cached['fetched_at']}"
-                self.status_text.color = ft.Colors.GREY
+                self.status_text.color = ft.colors.GREY
                 self._page.update()
             except Exception:
                 pass
@@ -145,7 +145,7 @@ class TrendingTab(ft.Column):
     def _refresh_trending(self, e):
         if not self.client.is_configured and not self.api_key_field.value:
             self.status_text.value = "Masukkan RapidAPI Key terlebih dahulu"
-            self.status_text.color = ft.Colors.RED
+            self.status_text.color = ft.colors.RED
             self._page.update()
             return
 
@@ -155,7 +155,7 @@ class TrendingTab(ft.Column):
         self.refresh_btn.disabled = True
         self.progress_bar.visible = True
         self.status_text.value = "Mengambil data trending..."
-        self.status_text.color = ft.Colors.BLUE
+        self.status_text.color = ft.colors.BLUE
         self._page.update()
 
         def run():
@@ -168,10 +168,10 @@ class TrendingTab(ft.Column):
 
                 self._display_videos(videos)
                 self.status_text.value = f"✅ {len(videos)} video trending dari {REGIONS.get(region, region)}"
-                self.status_text.color = ft.Colors.GREEN
+                self.status_text.color = ft.colors.GREEN
             except Exception as ex:
                 self.status_text.value = f"Error: {ex}"
-                self.status_text.color = ft.Colors.RED
+                self.status_text.color = ft.colors.RED
             finally:
                 self.refresh_btn.disabled = False
                 self.progress_bar.visible = False
@@ -194,13 +194,13 @@ class TrendingTab(ft.Column):
     def _build_video_card(self, rank, v):
         stats_row = ft.Row(
             [
-                ft.Icon(ft.Icons.FAVORITE_BORDER, size=14),
+                ft.Icon(ft.icons.FAVORITE_BORDER, size=14),
                 ft.Text(self._format_num(v.get("likes", 0)), size=12),
-                ft.Icon(ft.Icons.CHAT_BUBBLE_OUTLINE, size=14),
+                ft.Icon(ft.icons.CHAT_BUBBLE_OUTLINE, size=14),
                 ft.Text(self._format_num(v.get("comments", 0)), size=12),
-                ft.Icon(ft.Icons.SHARE, size=14),
+                ft.Icon(ft.icons.SHARE, size=14),
                 ft.Text(self._format_num(v.get("shares", 0)), size=12),
-                ft.Icon(ft.Icons.PLAY_CIRCLE_OUTLINE, size=14),
+                ft.Icon(ft.icons.PLAY_CIRCLE_OUTLINE, size=14),
                 ft.Text(self._format_num(v.get("plays", 0)), size=12),
             ],
             spacing=4,
@@ -225,7 +225,7 @@ class TrendingTab(ft.Column):
                                     ft.Text(
                                         f"@{v.get('author', 'unknown')}",
                                         size=12,
-                                        color=ft.Colors.GREY_600,
+                                        color=ft.colors.GREY_600,
                                     ),
                                     stats_row,
                                     ft.Row(
@@ -233,12 +233,12 @@ class TrendingTab(ft.Column):
                                             ft.Text(
                                                 f"🎵 {v.get('music', '')[:40]}",
                                                 size=11,
-                                                color=ft.Colors.GREY_600,
+                                                color=ft.colors.GREY_600,
                                             ),
                                             ft.Text(
                                                 f"#{v.get('hashtags', '')[:50]}",
                                                 size=11,
-                                                color=ft.Colors.BLUE_400,
+                                                color=ft.colors.BLUE_400,
                                             ),
                                         ],
                                         spacing=8,
@@ -254,7 +254,7 @@ class TrendingTab(ft.Column):
                 spacing=4,
             ),
             padding=8,
-            border=ft.Border.all(1, ft.Colors.GREY_300),
+            border=ft.border.all(1, ft.colors.GREY_300),
             border_radius=8,
             ink=True,
             on_click=lambda _, url=v.get("url", ""): self._page.launch_url(url),
