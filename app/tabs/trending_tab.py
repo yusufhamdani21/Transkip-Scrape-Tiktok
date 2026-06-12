@@ -70,21 +70,13 @@ class TrendingTab(ft.Column):
             label="Filter kata kunci",
             hint_text="artis, gosip, politik...",
             on_change=self._on_filter_change,
-            on_focus=self._on_filter_change,
             expand=True,
         )
 
-        self.suggestions_popup = ft.Container(
-            content=ft.Column(
-                spacing=2,
-                scroll=ft.ScrollMode.AUTO,
-                height=150,
-            ),
+        self.suggestion_chips = ft.Column(
+            spacing=2,
             visible=False,
-            border=ft.border.all(1, ft.colors.GREY_300),
-            border_radius=6,
-            bgcolor=ft.colors.WHITE,
-            padding=4,
+            wrap=True,
         )
 
         self.status_text = ft.Text("", size=13)
@@ -138,7 +130,7 @@ class TrendingTab(ft.Column):
                 spacing=10,
             ),
             self.filter_field,
-            self.suggestions_popup,
+            self.suggestion_chips,
             self.status_text,
             self.progress_bar,
             self.tab_btns,
@@ -166,34 +158,29 @@ class TrendingTab(ft.Column):
     def _on_filter_change(self, e):
         text = self.filter_field.value.strip().lower()
         if not text:
-            self.suggestions_popup.visible = False
+            self.suggestion_chips.visible = False
             self._display_videos()
             self._page.update()
             return
 
         last_keyword = text.split(",")[-1].strip()
         if not last_keyword:
-            self.suggestions_popup.visible = False
+            self.suggestion_chips.visible = False
             self._display_videos()
             self._page.update()
             return
 
         matches = [kw for kw in KEYWORD_SUGGESTIONS if kw.startswith(last_keyword) and kw != last_keyword]
-        if not matches:
-            self.suggestions_popup.visible = False
-        else:
-            col = self.suggestions_popup.content
-            col.controls.clear()
+        self.suggestion_chips.controls.clear()
+        if matches:
             for kw in matches[:10]:
-                col.controls.append(
+                self.suggestion_chips.controls.append(
                     ft.TextButton(
                         kw,
                         on_click=lambda _, k=kw: self._apply_suggestion(k),
-                        style=ft.ButtonStyle(padding=ft.padding.symmetric(4, 8)),
                     )
                 )
-            self.suggestions_popup.visible = True
-
+        self.suggestion_chips.visible = bool(matches)
         self._display_videos()
         self._page.update()
 
@@ -205,7 +192,7 @@ class TrendingTab(ft.Column):
         else:
             parts = [keyword]
         self.filter_field.value = ", ".join(parts) + ", "
-        self.suggestions_popup.visible = False
+        self.suggestion_chips.visible = False
         self._display_videos()
         self._page.update()
 
