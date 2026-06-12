@@ -14,6 +14,16 @@ from core.database import (
 from config import RAPIDAPI_KEY
 
 
+KEYWORD_SUGGESTIONS = [
+    "artis", "seleb", "gosip", "viral", "drama",
+    "selebriti", "aktor", "aktris", "penyanyi",
+    "kawin", "cerai", "skandal", "pacaran",
+    "bahlil",
+    "politik", "presiden", "jokowi", "prabowo",
+    "pemilu", "menteri", "dpr", "partai",
+    "korupsi", "kabinet", "pemerintah", "rakyat",
+]
+
 REGIONS = {
     "ID": "Indonesia",
     "US": "Amerika Serikat",
@@ -39,6 +49,7 @@ class TrendingTab(ft.Column):
         super().__init__(expand=True, spacing=10, scroll=ft.ScrollMode.AUTO)
         self._page = page
         self.client = TikTokClient()
+        self._raw_videos = []
         self._build()
 
     def _build(self):
@@ -53,6 +64,27 @@ class TrendingTab(ft.Column):
             "Refresh",
             icon=ft.icons.REFRESH,
             on_click=self._refresh_trending,
+        )
+
+        self.filter_field = ft.TextField(
+            label="Filter kata kunci",
+            hint_text="artis, gosip, politik...",
+            on_change=self._on_filter_change,
+            on_focus=self._on_filter_change,
+            expand=True,
+        )
+
+        self.suggestions_popup = ft.Container(
+            content=ft.Column(
+                spacing=2,
+                scroll=ft.ScrollMode.AUTO,
+                height=150,
+            ),
+            visible=False,
+            border=ft.border.all(1, ft.colors.GREY_300),
+            border_radius=6,
+            bgcolor=ft.colors.WHITE,
+            padding=4,
         )
 
         self.status_text = ft.Text("", size=13)
@@ -105,6 +137,8 @@ class TrendingTab(ft.Column):
                 [self.region_dropdown, self.refresh_btn],
                 spacing=10,
             ),
+            self.filter_field,
+            self.suggestions_popup,
             self.status_text,
             self.progress_bar,
             self.tab_btns,
@@ -129,13 +163,75 @@ class TrendingTab(ft.Column):
             self.status_text.color = ft.colors.GREEN
             self._page.update()
 
+    def _on_filter_change(self, e):
+        text = self.filter_field.value.strip().lower()
+        if not text:
+            self.suggestions_popup.visible = False
+            self._display_videos()
+            self._page.update()
+            return
+
+        last_keyword = text.split(",")[-1].strip()
+        if not last_keyword:
+            self.suggestions_popup.visible = False
+            self._display_videos()
+            self._page.update()
+            return
+
+        matches = [kw for kw in KEYWORD_SUGGESTIONS if kw.startswith(last_keyword) and kw != last_keyword]
+        if not matches:
+            self.suggestions_popup.visible = False
+        else:
+            col = self.suggestions_popup.content
+            col.controls.clear()
+            for kw in matches[:10]:
+                col.controls.append(
+                    ft.TextButton(
+                        kw,
+                        on_click=lambda _, k=kw: self._apply_suggestion(k),
+                        style=ft.ButtonStyle(padding=ft.padding.symmetric(4, 8)),
+                    )
+                )
+            self.suggestions_popup.visible = True
+
+        self._display_videos()
+        self._page.update()
+
+    def _apply_suggestion(self, keyword):
+        text = self.filter_field.value.strip()
+        parts = [p.strip() for p in text.split(",") if p.strip()]
+        if parts:
+            parts[-1] = keyword
+        else:
+            parts = [keyword]
+        self.filter_field.value = ", ".join(parts) + ", "
+        self.suggestions_popup.visible = False
+        self._display_videos()
+        self._page.update()
+
+    def _filter_videos(self):
+        text = self.filter_field.value.strip().lower()
+        if not text:
+            return self._raw_videos[:]
+
+        keywords = [kw.strip() for kw in text.split(",") if kw.strip()]
+        if not keywords:
+            return self._raw_videos[:]
+
+        filtered = []
+        for v in self._raw_videos:
+            title = (v.get("title") or "").lower()
+            if any(kw in title for kw in keywords):
+                filtered.append(v)
+        return filtered
+
     def _load_cached(self):
         region = self.region_dropdown.value
         cached = get_cached_trending(region)
         if cached:
             try:
-                data = json.loads(cached["data"])
-                self._display_videos(data)
+                self._raw_videos = json.loads(cached["data"]) or []
+                self._display_videos()
                 self.status_text.value = f"Data cached dari {cached['fetched_at']}"
                 self.status_text.color = ft.colors.GREY
                 self._page.update()
@@ -161,13 +257,20 @@ class TrendingTab(ft.Column):
         def run():
             try:
                 region = self.region_dropdown.value
-                videos = self.client.get_trending_feed(region)
+                self._raw_videos = self.client.get_trending_feed(region)
 
-                save_trending_cache(region, json.dumps(videos, ensure_ascii=False))
-                save_trending_history(region, videos)
+                save_trending_cache(region, json.dumps(self._raw_videos, ensure_ascii=False))
+                save_trending_history(region, self._raw_videos)
 
-                self._display_videos(videos)
-                self.status_text.value = f"✅ {len(videos)} video trending dari {REGIONS.get(region, region)}"
+                filtered = self._filter_videos()
+                self._display_videos()
+                total = len(self._raw_videos)
+                shown = len(filtered)
+                label = REGIONS.get(region, region)
+                if shown < total:
+                    self.status_text.value = f"✅ {shown} dari {total} video ({label})"
+                else:
+                    self.status_text.value = f"✅ {total} video trending dari {label}"
                 self.status_text.color = ft.colors.GREEN
             except Exception as ex:
                 self.status_text.value = f"Error: {ex}"
@@ -180,16 +283,18 @@ class TrendingTab(ft.Column):
 
         threading.Thread(target=run, daemon=True).start()
 
-    def _display_videos(self, videos):
+    def _display_videos(self, videos=None):
         self.trending_list.controls.clear()
-        videos = videos or []
-        for i, v in enumerate(videos[:20], 1):
-            card = self._build_video_card(i, v)
-            self.trending_list.controls.append(card)
-        if not videos:
+        source = videos if videos is not None else self._filter_videos()
+        if not source:
             self.trending_list.controls.append(
                 ft.Text("Tidak ada data trending", italic=True)
             )
+            self.trending_list.update()
+            return
+        for i, v in enumerate(source[:20], 1):
+            card = self._build_video_card(i, v)
+            self.trending_list.controls.append(card)
         self.trending_list.update()
 
     def _build_video_card(self, rank, v):
