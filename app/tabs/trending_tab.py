@@ -182,6 +182,7 @@ class TrendingTab(ft.Column):
 
     def _display_videos(self, videos):
         self.trending_list.controls.clear()
+        videos = videos or []
         for i, v in enumerate(videos[:20], 1):
             card = self._build_video_card(i, v)
             self.trending_list.controls.append(card)
@@ -282,8 +283,9 @@ class TrendingTab(ft.Column):
                     )
                 )
                 for r in day_videos[:5]:
+                    title = (r.get("title") or "")[:60]
                     self.history_list.controls.append(
-                        ft.Text(f"  #{r['rank']} {r['title'][:60]}", size=12)
+                        ft.Text(f"  #{r['rank']} {title}", size=12)
                     )
                 self.history_list.controls.append(ft.Divider(height=1))
             if not records:

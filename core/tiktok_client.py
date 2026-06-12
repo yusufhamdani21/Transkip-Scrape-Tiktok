@@ -46,26 +46,26 @@ class TikTokClient:
     def _parse_videos(self, raw):
         videos = []
         for v in raw:
-            author = v.get("author", {}) or {}
+            author = v.get("author") or {}
             videos.append(
                 {
-                    "id": v.get("video_id", ""),
-                    "title": v.get("title", ""),
-                    "description": v.get("title", ""),
-                    "author": author.get("nickname", ""),
-                    "author_username": author.get("unique_id", ""),
-                    "author_avatar": author.get("avatar", ""),
-                    "likes": v.get("digg_count", 0),
-                    "comments": v.get("comment_count", 0),
-                    "shares": v.get("share_count", 0),
-                    "plays": v.get("play_count", 0),
-                    "duration": v.get("duration", 0),
+                    "id": v.get("video_id") or "",
+                    "title": v.get("title") or "",
+                    "description": v.get("title") or "",
+                    "author": author.get("nickname") or "",
+                    "author_username": author.get("unique_id") or "",
+                    "author_avatar": author.get("avatar") or "",
+                    "likes": v.get("digg_count") or 0,
+                    "comments": v.get("comment_count") or 0,
+                    "shares": v.get("share_count") or 0,
+                    "plays": v.get("play_count") or 0,
+                    "duration": v.get("duration") or 0,
                     "hashtags": "",
-                    "music": v.get("music_info", {}).get("title", ""),
-                    "url": f"https://www.tiktok.com/@{author.get('unique_id', '')}/video/{v.get('video_id', '')}",
-                    "cover": v.get("cover", ""),
-                    "region": v.get("region", ""),
-                    "create_time": v.get("create_time", 0),
+                    "music": (v.get("music_info") or {}).get("title") or "",
+                    "url": f"https://www.tiktok.com/@{(author.get('unique_id') or '')}/video/{(v.get('video_id') or '')}",
+                    "cover": v.get("cover") or "",
+                    "region": v.get("region") or "",
+                    "create_time": v.get("create_time") or 0,
                 }
             )
         return videos
