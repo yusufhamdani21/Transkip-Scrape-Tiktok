@@ -1,4 +1,5 @@
 import threading
+import tempfile
 from pathlib import Path
 
 import flet as ft
@@ -6,6 +7,7 @@ import flet as ft
 from core.transcriber import transcribe, export_srt, export_vtt, get_available_models
 from core.recorder import AudioRecorder
 from core.database import save_transcription, get_transcriptions
+from config import RECORDINGS_DIR
 
 
 class TranscribeTab(ft.Column):
@@ -90,6 +92,7 @@ class TranscribeTab(ft.Column):
                         on_click=lambda _: self.file_picker.pick_files(
                             allow_multiple=False,
                             allowed_extensions=["mp3", "wav", "m4a", "ogg", "mp4", "webm"],
+                            with_data=True,
                         ),
                     ),
                     self.record_btn,
@@ -114,9 +117,20 @@ class TranscribeTab(ft.Column):
         self._refresh_history()
 
     def _on_file_picked(self, e):
-        if e.files:
-            self.audio_path = e.files[0].path
-            self.status_text.value = f"File: {Path(self.audio_path).name}"
+        if e.files and e.files[0]:
+            f = e.files[0]
+            if f.path:
+                self.audio_path = f.path
+            elif f.bytes:
+                path = RECORDINGS_DIR / (f.name or f"upload_{id(f)}")
+                path.write_bytes(f.bytes)
+                self.audio_path = str(path)
+            else:
+                self.status_text.value = "Gagal: file tidak tersedia"
+                self.status_text.color = ft.colors.RED
+                self._page.update()
+                return
+            self.status_text.value = f"File: {f.name}"
             self.status_text.color = ft.colors.GREEN
             self.transcribe_btn.disabled = False
         elif e.path:
