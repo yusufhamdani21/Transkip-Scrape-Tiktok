@@ -20,7 +20,10 @@ except Exception as e:
 def main(page: ft.Page):
     try:
         page.title = "Flet Test"
-        page.add(ft.Text("Hello World!", size=30))
+        page.add(
+            ft.Text("Hello World!", size=30),
+            ft.Text("Jika ini terlihat, Flet bekerja!", size=16),
+        )
         with open(LOG_FILE, "a") as f:
             f.write("Page rendered OK\n")
     except Exception as e:
@@ -30,9 +33,10 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     with open(LOG_FILE, "a") as f:
-        f.write("Starting ft.app()...\n")
+        f.write("Starting ft.run() in web mode...\n")
+
     try:
-        ft.app(target=main)
+        ft.run(main, port=8501, view=ft.AppView.WEB_BROWSER)
     except Exception as e:
         with open(LOG_FILE, "a") as f:
-            f.write(f"ft.app() error: {e}\n{traceback.format_exc()}\n")
+            f.write(f"ft.run() error: {e}\n{traceback.format_exc()}\n")
