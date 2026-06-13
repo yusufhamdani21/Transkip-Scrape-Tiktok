@@ -23,7 +23,7 @@ class TranscribeTab(ft.Column):
 
         self.path_field = ft.TextField(
             label="Atau ketik path file manual",
-            hint_text="contoh: C:/audio/saya.mp3 atau /home/user/file.wav",
+            hint_text="Contoh: /mnt/c/Users/Nama/Downloads/file.mp3 (WSL) atau C:/audio/file.wav (Windows)",
             expand=True,
             on_submit=lambda _: self._set_manual_path(),
         )
@@ -145,10 +145,16 @@ class TranscribeTab(ft.Column):
     def _set_manual_path(self):
         p = self.path_field.value.strip()
         if p:
-            self.audio_path = p
-            self.status_text.value = f"File: {Path(p).name}"
-            self.status_text.color = ft.colors.GREEN
-            self.transcribe_btn.disabled = False
+            path = Path(p).expanduser().resolve()
+            if path.exists() and path.is_file():
+                self.audio_path = str(path)
+                self.status_text.value = f"File: {path.name}"
+                self.status_text.color = ft.colors.GREEN
+                self.transcribe_btn.disabled = False
+            else:
+                self.status_text.value = f"File tidak ditemukan: {path}"
+                self.status_text.color = ft.colors.RED
+                self.transcribe_btn.disabled = True
             self._page.update()
 
     def _save_result(self, path):

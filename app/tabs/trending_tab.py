@@ -160,6 +160,19 @@ class TrendingTab(ft.Column):
 
     def _apply_filter(self):
         self._display_videos()
+        total = len(self._raw_videos)
+        if total == 0:
+            self.status_text.value = "Belum ada data. Klik Refresh dulu."
+            self.status_text.color = ft.colors.GREY
+        else:
+            shown = len(self._filter_videos())
+            if shown == 0:
+                self.status_text.value = f"Tidak ada video mengandung keyword tersebut (dari {total} video)"
+                self.status_text.color = ft.colors.ORANGE
+            else:
+                self.status_text.value = f"✅ {shown} dari {total} video sesuai filter"
+                self.status_text.color = ft.colors.GREEN
+        self._page.update()
 
     def _filter_videos(self):
         text = self.filter_field.value.strip().lower()
@@ -227,7 +240,10 @@ class TrendingTab(ft.Column):
                     self.status_text.value = f"✅ {total} video trending dari {region_name}"
                     self.status_text.color = ft.colors.GREEN
             except Exception as ex:
-                self.status_text.value = f"Error: {ex}"
+                msg = str(ex)
+                if "401" in msg:
+                    msg += " — API Key tidak valid atau kuota habis. Coba masukkan key baru atau registrasi di RapidAPI."
+                self.status_text.value = msg
                 self.status_text.color = ft.colors.RED
             finally:
                 self.refresh_btn.disabled = False
@@ -241,8 +257,12 @@ class TrendingTab(ft.Column):
         self.trending_list.controls.clear()
         source = self._filter_videos()
         if not source:
+            if self._raw_videos:
+                msg = "Tidak ada video yang cocok dengan filter"
+            else:
+                msg = "Tidak ada data. Klik Refresh untuk mengambil trending"
             self.trending_list.controls.append(
-                ft.Text("Tidak ada data trending", italic=True)
+                ft.Text(msg, italic=True)
             )
             self.trending_list.update()
             return
