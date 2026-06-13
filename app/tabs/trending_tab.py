@@ -68,16 +68,23 @@ class TrendingTab(ft.Column):
         )
 
         self.filter_field = ft.TextField(
-            label="Filter kata kunci",
+            label="Cari di 20 video trending ini",
             hint_text="artis, gosip, politik...",
             expand=True,
             on_submit=lambda _: self._apply_filter(),
         )
 
         self.apply_filter_btn = ft.ElevatedButton(
-            "Terapkan",
-            icon=ft.icons.FILTER_LIST,
+            "Cari",
+            icon=ft.icons.SEARCH,
             on_click=lambda _: self._apply_filter(),
+        )
+
+        self.filter_info = ft.Text(
+            "* Pencarian hanya di 20 video trending saat ini, bukan di seluruh TikTok",
+            size=11,
+            color=ft.colors.GREY_600,
+            italic=True,
         )
 
         self.status_text = ft.Text("", size=13)
@@ -134,6 +141,7 @@ class TrendingTab(ft.Column):
                 [self.filter_field, self.apply_filter_btn],
                 spacing=5,
             ),
+            self.filter_info,
             self.status_text,
             self.progress_bar,
             self.tab_btns,
@@ -167,10 +175,10 @@ class TrendingTab(ft.Column):
         else:
             shown = len(self._filter_videos())
             if shown == 0:
-                self.status_text.value = f"Tidak ada video mengandung keyword tersebut (dari {total} video)"
+                self.status_text.value = f"Kata kunci tidak ditemukan di {total} video trending"
                 self.status_text.color = ft.colors.ORANGE
             else:
-                self.status_text.value = f"✅ {shown} dari {total} video sesuai filter"
+                self.status_text.value = f"✅ {shown} dari {total} video mengandung kata kunci"
                 self.status_text.color = ft.colors.GREEN
         self._page.update()
 
@@ -258,7 +266,7 @@ class TrendingTab(ft.Column):
         source = self._filter_videos()
         if not source:
             if self._raw_videos:
-                msg = "Tidak ada video yang cocok dengan filter"
+                msg = "Tidak ada video yang cocok dengan kata kunci (dari 20 trending)"
             else:
                 msg = "Tidak ada data. Klik Refresh untuk mengambil trending"
             self.trending_list.controls.append(
