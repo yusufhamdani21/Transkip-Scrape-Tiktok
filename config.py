@@ -6,9 +6,13 @@ from dotenv import load_dotenv
 
 if getattr(sys, "frozen", False):
     BASE_DIR = Path(sys.executable).parent
+    env_path = BASE_DIR / ".env"
+    if not env_path.exists():
+        env_path = BASE_DIR / "_internal" / ".env"
 else:
     BASE_DIR = Path(__file__).parent
-load_dotenv(BASE_DIR / ".env")
+    env_path = BASE_DIR / ".env"
+load_dotenv(env_path)
 
 DATA_DIR = BASE_DIR / "data"
 DB_PATH = DATA_DIR / "transkip.db"

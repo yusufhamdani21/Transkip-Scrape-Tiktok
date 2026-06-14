@@ -6,7 +6,10 @@ class TikTokClient:
     def __init__(self, api_key=None):
         self.api_key = api_key or RAPIDAPI_KEY
         self.base_url = f"https://{RAPIDAPI_HOST}"
-        self.headers = {
+
+    @property
+    def headers(self):
+        return {
             "x-rapidapi-key": self.api_key,
             "x-rapidapi-host": RAPIDAPI_HOST,
         }
