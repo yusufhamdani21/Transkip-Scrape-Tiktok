@@ -12,6 +12,7 @@ PYINSTALLER_CMD = [
     "--collect-all=faster_whisper",
     "--collect-all=ctranslate2",
     "--collect-all=torch",
+    "--collect-all=nvidia",
     "--collect-all=flet",
     "--hidden-import=sounddevice",
     "--hidden-import=_sounddevice_data",

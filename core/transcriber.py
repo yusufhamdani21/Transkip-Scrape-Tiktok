@@ -11,9 +11,16 @@ def _fix_torch_dll_path():
     import sys
     if getattr(sys, 'frozen', False):
         base = sys._MEIPASS
-        torch_lib = os.path.join(base, 'torch', 'lib')
-        if os.path.isdir(torch_lib):
-            os.environ['PATH'] = torch_lib + os.pathsep + os.environ.get('PATH', '')
+        paths = [os.path.join(base,  'torch', 'lib')]
+        nvidia_base = os.path.join(base, 'nvidia')
+        if os.path.isdir(nvidia_base):
+            for root, dirs, _ in os.walk(nvidia_base):
+                for d in dirs:
+                    lib_dir = os.path.join(root, d, 'lib')
+                    if os.path.isdir(lib_dir):
+                        paths.append(lib_dir)
+        for p in paths:
+            os.environ['PATH'] = p + os.pathsep + os.environ.get('PATH', '')
 
 
 def _get_model(model_name=None, device=None, compute_type=None):
