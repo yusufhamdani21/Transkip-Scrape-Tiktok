@@ -5,17 +5,15 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 if getattr(sys, "frozen", False):
-    BASE_DIR = Path(sys.executable).parent
-    env_path = BASE_DIR / ".env"
+    env_path = Path(sys.executable).parent / ".env"
     if not env_path.exists():
-        env_path = BASE_DIR / "_internal" / ".env"
+        env_path = Path(sys.executable).parent / "_internal" / ".env"
     if not env_path.exists():
         env_path = Path(sys._MEIPASS) / ".env"
-    DATA_DIR = BASE_DIR / "data"
+    DATA_DIR = Path(os.environ.get("APPDATA", Path.home())) / "Transkip" / "data"
 else:
-    BASE_DIR = Path(__file__).parent
-    env_path = BASE_DIR / ".env"
-    DATA_DIR = BASE_DIR / "data"
+    env_path = Path(__file__).parent / ".env"
+    DATA_DIR = Path(__file__).parent / "data"
 load_dotenv(env_path)
 
 DB_PATH = DATA_DIR / "transkip.db"
