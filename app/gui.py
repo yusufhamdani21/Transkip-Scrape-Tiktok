@@ -11,8 +11,6 @@ def log(msg):
         f.write(msg + "\n")
 
 
-from app.tabs.transcribe_tab import TranscribeTab
-from app.tabs.trending_tab import TrendingTab
 from core.database import init_db
 
 
@@ -37,6 +35,9 @@ def _safe_create(page, label, factory):
 
 def main(page: ft.Page):
     try:
+        from app.tabs.transcribe_tab import TranscribeTab
+        from app.tabs.trending_tab import TrendingTab
+
         page.title = "Transkip - Audio Transkripsi & Tren TikTok"
         page.theme_mode = ft.ThemeMode.LIGHT
         page.padding = 20

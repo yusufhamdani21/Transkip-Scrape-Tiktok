@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from faster_whisper import WhisperModel
 from config import WHISPER_MODEL, WHISPER_DEVICE, WHISPER_COMPUTE_TYPE
 
 
@@ -8,6 +7,8 @@ model_cache = {}
 
 
 def _get_model(model_name=None, device=None, compute_type=None):
+    from faster_whisper import WhisperModel
+
     key = (model_name or WHISPER_MODEL, device or WHISPER_DEVICE)
     if key not in model_cache:
         model_cache[key] = WhisperModel(
