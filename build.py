@@ -7,7 +7,7 @@ PYINSTALLER_CMD = [
     "pyinstaller",
     "--name=Transkip",
     "--windowed",
-    "--onefile",
+    "--onedir",
     "--add-data=.env;.",
     "--collect-all=faster_whisper",
     "--collect-all=ctranslate2",
@@ -29,7 +29,8 @@ def main():
     if result.returncode == 0:
         print("\n✅ Build berhasil!")
         print(f"📦 Folder ada di: dist/Transkip/")
-        print(f"   Jalankan Transkip.exe yang ada di dalam folder tersebut")
+        print(f"   🚀 Jalankan Transkip.exe yang ada di dalam folder tersebut")
+        print(f"   📌 Zip folder 'Transkip/' untuk dibagikan ke orang lain")
     else:
         print(f"\n❌ Build gagal dengan kode {result.returncode}")
         sys.exit(1)
