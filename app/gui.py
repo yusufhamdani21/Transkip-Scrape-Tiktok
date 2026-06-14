@@ -3,7 +3,7 @@ import os
 
 import flet as ft
 
-LOG_FILE = os.path.join(os.path.dirname(__file__) or ".", "transkip_error.log")
+LOG_FILE = os.path.join(os.environ.get("TEMP", os.getcwd()), "transkip_error.log")
 
 
 def log(msg):
