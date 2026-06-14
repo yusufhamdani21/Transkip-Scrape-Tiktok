@@ -28,7 +28,10 @@ class TikTokClient:
     def get_trending_feed(self, region="ID", count=20):
         data = self._get("/feed/list", {"region": region, "count": count})
         raw = data.get("data", [])
-        return self._parse_videos(raw)
+        videos = self._parse_videos(raw)
+        if region:
+            videos = [v for v in videos if v.get("region", "").upper() == region.upper()]
+        return videos
 
     def get_user_info(self, unique_id):
         data = self._get("/user/info", {"unique_id": unique_id})

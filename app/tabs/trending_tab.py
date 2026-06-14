@@ -34,6 +34,52 @@ REGIONS = {
 }
 
 
+CATEGORIES = {
+    "ALL": "Semua",
+    "POLITIK": "Politik",
+    "SELEB": "Entertainment / Seleb",
+    "BERITA": "Berita",
+    "OLAHRAGA": "Olahraga",
+    "MUSIK": "Musik",
+    "TEKNOLOGI": "Teknologi",
+    "BISNIS": "Bisnis / Ekonomi",
+}
+
+CATEGORY_KEYWORDS = {
+    "POLITIK": [
+        "politik", "presiden", "jokowi", "prabowo", "pemilu", "menteri",
+        "dpr", "partai", "korupsi", "kabinet", "pemerintah", "rakyat",
+        "demo", "pilkada", "gugatan", "konstitusi", "politisi",
+    ],
+    "SELEB": [
+        "artis", "seleb", "gosip", "drama", "selebriti", "aktor", "aktris",
+        "penyanyi", "kawin", "cerai", "skandal", "pacaran", "influencer",
+        "youtuber", "tiktokers", "bintang", "film", "sinetron",
+    ],
+    "BERITA": [
+        "berita", "terkini", "update", "breaking news", "kabar", "hari ini",
+        "headline", "news", "info", "kriminal", "bencana", "kecelakaan",
+    ],
+    "OLAHRAGA": [
+        "bola", "sepakbola", "olahraga", "liga", "pertandingan", "timnas",
+        "piala", "juara", "bulutangkis", "badminton", "moto gp", "f1",
+        "basket", "voli", "atlet", "olimpiade",
+    ],
+    "MUSIK": [
+        "musik", "lagu", "song", "musician", "album", "single", "konser",
+        "feat", "cover", "remix", "dangdut", "pop", "indie",
+    ],
+    "TEKNOLOGI": [
+        "teknologi", "tech", "gadget", "hp", "smartphone", "aplikasi",
+        "ai", "artificial intelligence", "digital", "startup", "coding",
+        "programming", "robot", "game", "gaming",
+    ],
+    "BISNIS": [
+        "bisnis", "ekonomi", "saham", "investasi", "kripto", "crypto",
+        "keuangan", "bank", "fintech", "umkm", "wirausaha", "pasar",
+    ],
+}
+
 KEYWORD_SUGGESTIONS = [
     "artis", "seleb", "gosip", "viral", "drama",
     "selebriti", "aktor", "aktris", "penyanyi",
@@ -61,6 +107,14 @@ class TrendingTab(ft.Column):
             width=200,
         )
 
+        self.category_dropdown = ft.Dropdown(
+            label="Kategori",
+            value="ALL",
+            options=[ft.dropdown.Option(k, v) for k, v in CATEGORIES.items()],
+            width=220,
+            on_change=lambda _: self._apply_category(),
+        )
+
         self.refresh_btn = ft.ElevatedButton(
             "Refresh",
             icon=ft.icons.REFRESH,
@@ -68,7 +122,7 @@ class TrendingTab(ft.Column):
         )
 
         self.filter_field = ft.TextField(
-            label="Cari di 20 video trending ini",
+            label="Cari di video trending ini",
             hint_text="artis, gosip, politik...",
             expand=True,
             on_submit=lambda _: self._apply_filter(),
@@ -81,7 +135,7 @@ class TrendingTab(ft.Column):
         )
 
         self.filter_info = ft.Text(
-            "* Pencarian hanya di 20 video trending saat ini, bukan di seluruh TikTok",
+            "* Pencarian hanya di video trending saat ini, bukan di seluruh TikTok",
             size=11,
             color=ft.colors.GREY_600,
             italic=True,
@@ -134,7 +188,7 @@ class TrendingTab(ft.Column):
                 spacing=5,
             ),
             ft.Row(
-                [self.region_dropdown, self.refresh_btn],
+                [self.region_dropdown, self.category_dropdown, self.refresh_btn],
                 spacing=10,
             ),
             ft.Row(
@@ -166,6 +220,21 @@ class TrendingTab(ft.Column):
             self.status_text.color = ft.colors.GREEN
             self._page.update()
 
+    def _apply_category(self):
+        self._display_videos()
+        total = len(self._raw_videos)
+        if total == 0:
+            return
+        shown = len(self._filter_videos())
+        cat = self.category_dropdown.value
+        cat_label = CATEGORIES.get(cat, "")
+        if cat and cat != "ALL":
+            self.status_text.value = (
+                f"📂 {cat_label}: {shown} dari {total} video"
+            )
+            self.status_text.color = ft.colors.BLUE
+        self._page.update()
+
     def _apply_filter(self):
         self._display_videos()
         total = len(self._raw_videos)
@@ -174,28 +243,47 @@ class TrendingTab(ft.Column):
             self.status_text.color = ft.colors.GREY
         else:
             shown = len(self._filter_videos())
+            cat = self.category_dropdown.value
+            cat_label = CATEGORIES.get(cat, "")
+            prefix = f"📂 {cat_label}: " if cat and cat != "ALL" else ""
             if shown == 0:
-                self.status_text.value = f"Kata kunci tidak ditemukan di {total} video trending"
+                self.status_text.value = f"{prefix}Kata kunci tidak ditemukan di {total} video trending"
                 self.status_text.color = ft.colors.ORANGE
             else:
-                self.status_text.value = f"✅ {shown} dari {total} video mengandung kata kunci"
+                self.status_text.value = f"{prefix}✅ {shown} dari {total} video mengandung kata kunci"
                 self.status_text.color = ft.colors.GREEN
         self._page.update()
 
-    def _filter_videos(self):
-        text = self.filter_field.value.strip().lower()
-        if not text:
-            return self._raw_videos[:]
-
-        keywords = [kw.strip() for kw in text.split(",") if kw.strip()]
-        if not keywords:
-            return self._raw_videos[:]
-
-        filtered = []
-        for v in self._raw_videos:
-            title = (v.get("title") or "").lower()
+    def _classify_video(self, video):
+        title = (video.get("title") or "").lower()
+        matched = []
+        for cat_id, keywords in CATEGORY_KEYWORDS.items():
             if any(kw in title for kw in keywords):
-                filtered.append(v)
+                matched.append(cat_id)
+        return matched
+
+    def _filter_videos(self):
+        cat = self.category_dropdown.value
+        text = self.filter_field.value.strip().lower()
+
+        filtered = self._raw_videos[:]
+
+        if cat and cat != "ALL":
+            keywords = CATEGORY_KEYWORDS.get(cat, [])
+            if keywords:
+                filtered = [
+                    v for v in filtered
+                    if any(kw in (v.get("title") or "").lower() for kw in keywords)
+                ]
+
+        if text:
+            kw_list = [kw.strip() for kw in text.split(",") if kw.strip()]
+            if kw_list:
+                filtered = [
+                    v for v in filtered
+                    if any(kw in (v.get("title") or "").lower() for kw in kw_list)
+                ]
+
         return filtered
 
     def _load_cached(self):
@@ -205,7 +293,14 @@ class TrendingTab(ft.Column):
             try:
                 self._raw_videos = json.loads(cached["data"]) or []
                 self._display_videos()
-                self.status_text.value = f"Data cached dari {cached['fetched_at']}"
+                total = len(self._raw_videos)
+                cat_id = self.category_dropdown.value
+                cat_label = CATEGORIES.get(cat_id, "")
+                shown = len(self._filter_videos())
+                cat_info = f" 📂 {cat_label}" if cat_id and cat_id != "ALL" and shown > 0 else ""
+                self.status_text.value = (
+                    f"Data cached dari {cached['fetched_at']} ({total} video{cat_info})"
+                )
                 self.status_text.color = ft.colors.GREY
                 self._page.update()
             except Exception:
@@ -231,7 +326,7 @@ class TrendingTab(ft.Column):
         def run():
             try:
                 region = self.region_dropdown.value
-                raw = self.client.get_trending_feed(region)
+                raw = self.client.get_trending_feed(region, count=50)
                 self._raw_videos = raw if isinstance(raw, list) else []
                 total = len(self._raw_videos)
 
@@ -239,14 +334,22 @@ class TrendingTab(ft.Column):
                     save_trending_cache(region, json.dumps(self._raw_videos, ensure_ascii=False))
                     save_trending_history(region, self._raw_videos)
 
+                cat_id = self.category_dropdown.value
+                cat_label = CATEGORIES.get(cat_id, "")
                 self._display_videos()
                 region_name = REGIONS.get(region, region)
                 if total == 0:
                     self.status_text.value = f"Tidak ada video dari API ({region_name})"
                     self.status_text.color = ft.colors.ORANGE
                 else:
-                    self.status_text.value = f"✅ {total} video trending dari {region_name}"
-                    self.status_text.color = ft.colors.GREEN
+                    shown = len(self._filter_videos())
+                    cat_info = f" 📂 {cat_label}" if cat_id and cat_id != "ALL" else ""
+                    if cat_id and cat_id != "ALL" and shown == 0:
+                        self.status_text.value = f"✅ {total} video dari {region_name}{cat_info} — tidak ada yang cocok"
+                        self.status_text.color = ft.colors.ORANGE
+                    else:
+                        self.status_text.value = f"✅ {total} video dari {region_name}{cat_info}"
+                        self.status_text.color = ft.colors.GREEN
             except Exception as ex:
                 msg = str(ex)
                 if "401" in msg:
@@ -266,7 +369,7 @@ class TrendingTab(ft.Column):
         source = self._filter_videos()
         if not source:
             if self._raw_videos:
-                msg = "Tidak ada video yang cocok dengan kata kunci (dari 20 trending)"
+                msg = "Tidak ada video yang cocok dengan kata kunci"
             else:
                 msg = "Tidak ada data. Klik Refresh untuk mengambil trending"
             self.trending_list.controls.append(
@@ -326,15 +429,36 @@ class TrendingTab(ft.Column):
                                         ]
                                         + (
                                             [
+                                                    ft.Text(
+                                                        f"#{v.get('hashtags', '')[:50]}",
+                                                        size=11,
+                                                        color=ft.colors.BLUE_400,
+                                                    )
+                                                ]
+                                                if v.get("hashtags", "")
+                                                else []
+                                        )
+                                        + (
+                                            [
                                                 ft.Text(
-                                                    f"#{v.get('hashtags', '')[:50]}",
+                                                    f"📍 {v.get('region', '?')}",
                                                     size=11,
-                                                    color=ft.colors.BLUE_400,
+                                                    color=ft.colors.GREEN_400,
+                                                    weight=ft.FontWeight.BOLD,
                                                 )
                                             ]
-                                            if v.get("hashtags", "")
+                                            if v.get("region", "")
                                             else []
-                                        ),
+                                        )
+                                        + [
+                                            ft.Text(
+                                                f"🏷️ {CATEGORIES.get(c, c)}",
+                                                size=11,
+                                                color=ft.colors.PURPLE_400,
+                                                weight=ft.FontWeight.BOLD,
+                                            )
+                                            for c in self._classify_video(v)
+                                        ],
                                         spacing=8,
                                     ),
                                 ],

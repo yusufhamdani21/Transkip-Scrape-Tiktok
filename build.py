@@ -3,16 +3,20 @@ import sys
 from pathlib import Path
 
 
+SEP = ";" if sys.platform == "win32" else ":"
+
 PYINSTALLER_CMD = [
     "pyinstaller",
     "--name=Transkip",
     "--windowed",
     "--onefile",
-    "--add-data=src:src",
+    f"--add-data=.env{SEP}.env",
     "--hidden-import=faster_whisper",
     "--hidden-import=ctranslate2",
     "--hidden-import=sounddevice",
     "--hidden-import=_sounddevice_data",
+    "--hidden-import=requests",
+    "--hidden-import=dotenv",
     "--collect-all=flet",
     "main.py",
 ]
@@ -25,7 +29,7 @@ def main():
     result = subprocess.run(PYINSTALLER_CMD, capture_output=False)
     if result.returncode == 0:
         print("\n✅ Build berhasil!")
-        print(f"📦 File ada di: dist/Transkip")
+        print(f"📦 File ada di: dist/Transkip.exe")
     else:
         print(f"\n❌ Build gagal dengan kode {result.returncode}")
         sys.exit(1)
