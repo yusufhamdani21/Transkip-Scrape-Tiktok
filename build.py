@@ -8,6 +8,7 @@ PYINSTALLER_CMD = [
     "--name=Transkip",
     "--windowed",
     "--onedir",
+    "--add-data=.env;.",
     "--collect-all=faster_whisper",
     "--collect-all=ctranslate2",
     "--collect-all=torch",
