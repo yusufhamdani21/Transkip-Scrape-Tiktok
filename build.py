@@ -7,14 +7,15 @@ PYINSTALLER_CMD = [
     "pyinstaller",
     "--name=Transkip",
     "--windowed",
-    "--onefile",
-    "--hidden-import=faster_whisper",
-    "--hidden-import=ctranslate2",
+    "--onedir",
+    "--collect-all=faster_whisper",
+    "--collect-all=ctranslate2",
+    "--collect-all=torch",
+    "--collect-all=flet",
     "--hidden-import=sounddevice",
     "--hidden-import=_sounddevice_data",
     "--hidden-import=requests",
     "--hidden-import=dotenv",
-    "--collect-all=flet",
     "main.py",
 ]
 
@@ -26,7 +27,8 @@ def main():
     result = subprocess.run(PYINSTALLER_CMD, capture_output=False)
     if result.returncode == 0:
         print("\n✅ Build berhasil!")
-        print(f"📦 File ada di: dist/Transkip.exe")
+        print(f"📦 Folder ada di: dist/Transkip/")
+        print(f"   Jalankan Transkip.exe yang ada di dalam folder tersebut")
     else:
         print(f"\n❌ Build gagal dengan kode {result.returncode}")
         sys.exit(1)
