@@ -9,12 +9,15 @@ if getattr(sys, "frozen", False):
     env_path = BASE_DIR / ".env"
     if not env_path.exists():
         env_path = BASE_DIR / "_internal" / ".env"
+    if not env_path.exists():
+        env_path = Path(sys._MEIPASS) / ".env"
+    DATA_DIR = BASE_DIR / "data"
 else:
     BASE_DIR = Path(__file__).parent
     env_path = BASE_DIR / ".env"
+    DATA_DIR = BASE_DIR / "data"
 load_dotenv(env_path)
 
-DATA_DIR = BASE_DIR / "data"
 DB_PATH = DATA_DIR / "transkip.db"
 RECORDINGS_DIR = DATA_DIR / "recordings"
 

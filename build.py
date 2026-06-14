@@ -7,7 +7,7 @@ PYINSTALLER_CMD = [
     "pyinstaller",
     "--name=Transkip",
     "--windowed",
-    "--onedir",
+    "--onefile",
     "--add-data=.env;.",
     "--collect-all=faster_whisper",
     "--collect-all=ctranslate2",
