@@ -11,16 +11,17 @@ def _fix_torch_dll_path():
     import sys
     if getattr(sys, 'frozen', False):
         base = sys._MEIPASS
-        paths = [os.path.join(base,  'torch', 'lib')]
-        nvidia_base = os.path.join(base, 'nvidia')
-        if os.path.isdir(nvidia_base):
-            for root, dirs, _ in os.walk(nvidia_base):
-                for d in dirs:
-                    lib_dir = os.path.join(root, d, 'lib')
-                    if os.path.isdir(lib_dir):
-                        paths.append(lib_dir)
-        for p in paths:
-            os.environ['PATH'] = p + os.pathsep + os.environ.get('PATH', '')
+        torch_lib = os.path.join(base, 'torch', 'lib')
+        if os.path.isdir(torch_lib):
+            os.environ['PATH'] = torch_lib + os.pathsep + os.environ.get('PATH', '')
+        try:
+            with open(os.path.join(os.environ.get('TEMP', '.'), 'transkip_debug.log'), 'a') as f:
+                f.write(f"_MEIPASS={base}\n")
+                f.write(f"torch_lib_exists={os.path.isdir(torch_lib)}\n")
+                if os.path.isdir(torch_lib):
+                    f.write(f"c10_dll_exists={os.path.isfile(os.path.join(torch_lib, 'c10.dll'))}\n")
+        except Exception:
+            pass
 
 
 def _get_model(model_name=None, device=None, compute_type=None):
