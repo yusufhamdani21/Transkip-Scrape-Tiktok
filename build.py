@@ -3,14 +3,11 @@ import sys
 from pathlib import Path
 
 
-SEP = ";" if sys.platform == "win32" else ":"
-
 PYINSTALLER_CMD = [
     "pyinstaller",
     "--name=Transkip",
     "--windowed",
     "--onefile",
-    f"--add-data=.env{SEP}.env",
     "--hidden-import=faster_whisper",
     "--hidden-import=ctranslate2",
     "--hidden-import=sounddevice",
