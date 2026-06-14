@@ -6,7 +6,18 @@ from config import WHISPER_MODEL, WHISPER_DEVICE, WHISPER_COMPUTE_TYPE
 model_cache = {}
 
 
+def _fix_torch_dll_path():
+    import os
+    import sys
+    if getattr(sys, 'frozen', False):
+        base = sys._MEIPASS
+        torch_lib = os.path.join(base, 'torch', 'lib')
+        if os.path.isdir(torch_lib):
+            os.environ['PATH'] = torch_lib + os.pathsep + os.environ.get('PATH', '')
+
+
 def _get_model(model_name=None, device=None, compute_type=None):
+    _fix_torch_dll_path()
     from faster_whisper import WhisperModel
 
     key = (model_name or WHISPER_MODEL, device or WHISPER_DEVICE)
